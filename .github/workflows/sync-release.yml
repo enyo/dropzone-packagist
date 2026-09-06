@@ -81,8 +81,17 @@ jobs:
           unzip -q dist.zip
           rm dist.zip
 
-          cp source/package.json .
-          cp source/CHANGELOG.md .
+          # dropzone became a monorepo, so the library moved to
+          # packages/dropzone. Releases tagged before that still have these at
+          # the repository root, and this workflow has to be able to sync
+          # either.
+          if [ -f source/packages/dropzone/package.json ]; then
+            library=source/packages/dropzone
+          else
+            library=source
+          fi
+          cp "$library/package.json" .
+          cp "$library/CHANGELOG.md" .
           rm -rf source
 
       - name: Commit and tag
