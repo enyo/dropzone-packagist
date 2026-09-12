@@ -1,7 +1,7 @@
 {
   "name": "enyo/dropzone",
   "description": "Handles drag and drop of files for you.",
-  "homepage": "https://www.dropzone.dev/js",
+  "homepage": "https://www.dropzone.dev/",
   "keywords": [
     "dragndrop",
     "drag and drop",
