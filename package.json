@@ -1,6 +1,6 @@
 {
   "name": "dropzone",
-  "version": "6.2.0",
+  "version": "6.2.1",
   "description": "Handles drag and drop of files for you.",
   "keywords": [
     "drag and drop",
@@ -30,14 +30,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/enyo/dropzone.git"
+    "url": "git+https://github.com/enyo/dropzone.git",
+    "directory": "packages/dropzone"
   },
   "files": [
     "dist",
     "src",
     "composer.json",
-    "CHANGELOG.md",
-    "CODE_OF_CONDUCT.md"
+    "CHANGELOG.md"
   ],
   "main": "dist/dropzone.js",
   "module": "dist/dropzone.mjs",
@@ -49,23 +49,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "changeset": "changeset",
-    "changeset:version": "changeset version",
-    "changeset:publish": "changeset publish",
     "prepublishOnly": "pnpm run build"
   },
   "devDependencies": {
-    "@changesets/changelog-github": "^1.0.0",
-    "@changesets/cli": "^3.0.1",
-    "@playwright/test": "^1.62.1",
     "@vitest/browser-playwright": "^4.1.11",
-    "oxfmt": "^0.65.0",
-    "oxlint": "^1.80.0",
-    "playwright": "^1.62.1",
     "sass": "^1.33.0",
     "vite": "^8.2.2",
     "vitest": "^4.1.11"

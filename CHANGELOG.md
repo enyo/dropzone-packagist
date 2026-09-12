@@ -1,3 +1,11 @@
+## 6.2.1
+
+### Patch Changes
+
+- [#2355](https://github.com/enyo/dropzone/pull/2355) [`07a1347`](https://github.com/enyo/dropzone/commit/07a1347bf08672c9353e87c90068df0320797c5a) Thanks [@enyo](https://github.com/enyo)! - Point `homepage` at `https://www.dropzone.dev/`. It referenced `/js`, a route that only ever redirected to the front page and no longer exists, so the homepage link on npm was a 404.
+
+- [#2353](https://github.com/enyo/dropzone/pull/2353) [`bb5af51`](https://github.com/enyo/dropzone/commit/bb5af51786189f7160c0e64d00c29425efb6f5ab) Thanks [@enyo](https://github.com/enyo)! - `CODE_OF_CONDUCT.md` is no longer part of the published package. It stays in the repository where GitHub looks for it, but the library now lives in `packages/dropzone` and npm can only pack files from inside that directory. Nothing else about the package changed.
+
 ## 6.2.0
 
 ### Minor Changes
