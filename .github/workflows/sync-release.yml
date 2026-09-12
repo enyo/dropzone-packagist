@@ -41,14 +41,30 @@ jobs:
           INPUT_TAG: ${{ inputs.tag }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
         run: |
-          tag="${INPUT_TAG:-$(gh release view --repo enyo/dropzone --json tagName --jq .tagName)}"
+          release="${INPUT_TAG:-$(gh release view --repo enyo/dropzone --json tagName --jq .tagName)}"
+
+          # Packagist derives the package version from the tag name, so ours
+          # has to be a bare version whatever upstream calls its own tag.
+          # Upstream tags v<version>, but changesets switches to
+          # <name>@<version> whenever the workspace holds more than one
+          # package, and Packagist cannot read that as a version at all.
+          version="${release##*@}"
+          version="${version#v}"
+          tag="v$version"
+
+          echo "release=$release" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+          if ! printf '%s' "$version" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "::error::Could not read a version out of the upstream tag '$release'."
+            exit 1
+          fi
 
           if git ls-remote --exit-code --tags "$REPO_URL" "refs/tags/$tag" > /dev/null 2>&1; then
             echo "$tag is already synced, nothing to do."
             echo "needed=false" >> "$GITHUB_OUTPUT"
           else
-            echo "$tag is new."
+            echo "$release is new, syncing it as $tag."
             echo "needed=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -63,14 +79,14 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: enyo/dropzone
-          ref: ${{ steps.release.outputs.tag }}
+          ref: ${{ steps.release.outputs.release }}
           path: source
 
       - name: Replace dist from the release asset
         if: steps.release.outputs.needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag }}
+          TAG: ${{ steps.release.outputs.release }}
         run: |
           gh release download "$TAG" \
             --repo enyo/dropzone \
