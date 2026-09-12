@@ -1,4 +1,4 @@
-# Mirrors a dropzone/dropzone release into this repo so Packagist can serve it.
+# Mirrors an enyo/dropzone release into this repo so Packagist can serve it.
 #
 # This repo only ever writes to itself and reads a public release, so the
 # built-in GITHUB_TOKEN is enough and there is no cross-repo secret to expire.
@@ -41,7 +41,7 @@ jobs:
           INPUT_TAG: ${{ inputs.tag }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
         run: |
-          tag="${INPUT_TAG:-$(gh release view --repo dropzone/dropzone --json tagName --jq .tagName)}"
+          tag="${INPUT_TAG:-$(gh release view --repo enyo/dropzone --json tagName --jq .tagName)}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
           if git ls-remote --exit-code --tags "$REPO_URL" "refs/tags/$tag" > /dev/null 2>&1; then
@@ -62,7 +62,7 @@ jobs:
         if: steps.release.outputs.needed == 'true'
         uses: actions/checkout@v7
         with:
-          repository: dropzone/dropzone
+          repository: enyo/dropzone
           ref: ${{ steps.release.outputs.tag }}
           path: source
 
@@ -73,7 +73,7 @@ jobs:
           TAG: ${{ steps.release.outputs.tag }}
         run: |
           gh release download "$TAG" \
-            --repo dropzone/dropzone \
+            --repo enyo/dropzone \
             --pattern dist.zip \
             --clobber
 

@@ -10,7 +10,7 @@
   ],
   "homepage": "https://www.dropzone.dev/js",
   "bugs": {
-    "url": "https://github.com/dropzone/dropzone/issues",
+    "url": "https://github.com/enyo/dropzone/issues",
     "email": "m@tias.me"
   },
   "license": "MIT",
@@ -30,7 +30,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dropzone/dropzone.git"
+    "url": "git+https://github.com/enyo/dropzone.git"
   },
   "files": [
     "dist",
