@@ -3,7 +3,7 @@ Object.defineProperties(exports, {
 	[Symbol.toStringTag]: { value: "Module" }
 });
 //#region package.json
-var version = "6.3.0";
+var version = "6.3.1";
 //#endregion
 //#region src/extend.ts
 function extend(...args) {
