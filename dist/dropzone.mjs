@@ -1,6 +1,8 @@
-//#region src/extend.js
-function extend() {
-	var args = [].slice.call(arguments);
+//#region package.json
+var version = "6.3.0";
+//#endregion
+//#region src/extend.ts
+function extend(...args) {
 	var deep = false;
 	if (typeof args[0] == "boolean") deep = args.shift();
 	var result = args[0];
@@ -26,7 +28,7 @@ function isUnextendable(val) {
 	return !val || typeof val != "object" && typeof val != "function";
 }
 //#endregion
-//#region src/emitter.js
+//#region src/emitter.ts
 var Emitter = class {
 	on(event, fn) {
 		this._callbacks = this._callbacks || {};
@@ -73,7 +75,7 @@ var Emitter = class {
 	}
 };
 //#endregion
-//#region src/options.js
+//#region src/options.ts
 var defaultOptions = {
 	/**
 	* Has to be specified on elements other than form (or when the form doesn't
@@ -659,46 +661,51 @@ var defaultOptions = {
 	emptyfolder() {}
 };
 //#endregion
-//#region src/dropzone.js
+//#region src/dropzone.ts
+var _Dropzone;
+var dropzoneEvents = [
+	"drop",
+	"dragstart",
+	"dragend",
+	"dragenter",
+	"dragover",
+	"dragleave",
+	"addedfile",
+	"addedfiles",
+	"removedfile",
+	"thumbnail",
+	"error",
+	"errormultiple",
+	"processing",
+	"processingmultiple",
+	"uploadprogress",
+	"totaluploadprogress",
+	"sending",
+	"sendingmultiple",
+	"success",
+	"successmultiple",
+	"canceled",
+	"canceledmultiple",
+	"complete",
+	"completemultiple",
+	"reset",
+	"maxfilesexceeded",
+	"maxfilesreached",
+	"queuecomplete",
+	"emptyfolder"
+];
 var Dropzone = class Dropzone extends Emitter {
-	static initClass() {
-		this.prototype.Emitter = Emitter;
-		this.prototype.events = [
-			"drop",
-			"dragstart",
-			"dragend",
-			"dragenter",
-			"dragover",
-			"dragleave",
-			"addedfile",
-			"addedfiles",
-			"removedfile",
-			"thumbnail",
-			"error",
-			"errormultiple",
-			"processing",
-			"processingmultiple",
-			"uploadprogress",
-			"totaluploadprogress",
-			"sending",
-			"sendingmultiple",
-			"success",
-			"successmultiple",
-			"canceled",
-			"canceledmultiple",
-			"complete",
-			"completemultiple",
-			"reset",
-			"maxfilesexceeded",
-			"maxfilesreached",
-			"queuecomplete",
-			"emptyfolder"
-		];
-		this.prototype._thumbnailQueue = [];
-		this.prototype._processingThumbnail = false;
+	on(event, fn) {
+		return super.on(event, fn);
+	}
+	emit(event, ...args) {
+		return super.emit(event, ...args);
 	}
 	constructor(el, options) {
 		super();
+		this.events = [...dropzoneEvents];
+		this._thumbnailQueue = [];
+		this._processingThumbnail = false;
 		let fallback, left;
 		this.element = el;
 		this.clickableElements = [];
@@ -722,7 +729,10 @@ var Dropzone = class Dropzone extends Emitter {
 			this.options.acceptedFiles = this.options.acceptedMimeTypes;
 			delete this.options.acceptedMimeTypes;
 		}
-		if (this.options.renameFilename != null) this.options.renameFile = (file) => this.options.renameFilename.call(this, file.name, file);
+		if (this.options.renameFilename != null) {
+			let renameFilename = this.options.renameFilename;
+			this.options.renameFile = (file) => renameFilename.call(this, file.name, file);
+		}
 		if (typeof this.options.method === "string") this.options.method = this.options.method.toUpperCase();
 		if ((fallback = this.getExistingFallback()) && fallback.parentNode) fallback.parentNode.removeChild(fallback);
 		if (this.options.previewsContainer !== false) {
@@ -781,7 +791,7 @@ var Dropzone = class Dropzone extends Emitter {
 				Dropzone.getElement(this.options.hiddenInputContainer, "hiddenInputContainer").appendChild(this.hiddenFileInput);
 				this.hiddenFileInput.addEventListener("change", () => {
 					let { files } = this.hiddenFileInput;
-					if (files.length) for (let file of files) this.addFile(file);
+					if (files && files.length) for (let file of files) this.addFile(file);
 					this.emit("addedfiles", files);
 					setupHiddenFileInput();
 				});
@@ -904,7 +914,7 @@ var Dropzone = class Dropzone extends Emitter {
 		};
 		for (let tagName of ["div", "form"]) {
 			var fallback;
-			if (fallback = getFallback(this.element.getElementsByTagName(tagName))) return fallback;
+			if (fallback = getFallback([...this.element.getElementsByTagName(tagName)])) return fallback;
 		}
 	}
 	setupEventListeners() {
@@ -972,7 +982,7 @@ var Dropzone = class Dropzone extends Emitter {
 		this.emit("drop", e);
 		let files = [];
 		for (let i = 0; i < e.dataTransfer.files.length; i++) files[i] = e.dataTransfer.files[i];
-		if (files.length) {
+		if (files && files.length) {
 			let { items } = e.dataTransfer;
 			if (items && items.length && items[0].webkitGetAsEntry != null) {
 				this._addFilesFromItems(items).then((addedFiles) => {
@@ -1046,10 +1056,10 @@ var Dropzone = class Dropzone extends Emitter {
 		});
 	}
 	accept(file, done) {
-		if (this.options.maxFilesize && file.size > this.options.maxFilesize * 1024 * 1024) done(this.options.dictFileTooBig.replace("{{filesize}}", Math.round(file.size / 1024 / 10.24) / 100).replace("{{maxFilesize}}", this.options.maxFilesize));
+		if (this.options.maxFilesize && file.size > this.options.maxFilesize * 1024 * 1024) done(this.options.dictFileTooBig.replace("{{filesize}}", String(Math.round(file.size / 1024 / 10.24) / 100)).replace("{{maxFilesize}}", String(this.options.maxFilesize)));
 		else if (!Dropzone.isValidFile(file, this.options.acceptedFiles)) done(this.options.dictInvalidFileType);
 		else if (this.options.maxFiles != null && this.getAcceptedFiles().length >= this.options.maxFiles) {
-			done(this.options.dictMaxFilesExceeded.replace("{{maxFiles}}", this.options.maxFiles));
+			done(this.options.dictMaxFilesExceeded.replace("{{maxFiles}}", String(this.options.maxFiles)));
 			this.emit("maxfilesexceeded", file);
 		} else this.options.accept.call(this, file, done);
 	}
@@ -1156,7 +1166,7 @@ var Dropzone = class Dropzone extends Emitter {
 				if (callback) callback();
 			};
 			mockFile.dataURL = imageUrl;
-			this.createThumbnailFromUrl(mockFile, this.options.thumbnailWidth, this.options.thumbnailHeight, this.options.thumbnailMethod, this.options.fixOrientation, onDone, crossOrigin);
+			this.createThumbnailFromUrl(mockFile, this.options.thumbnailWidth, this.options.thumbnailHeight, this.options.thumbnailMethod, false, onDone, crossOrigin);
 		}
 	}
 	createThumbnailFromUrl(file, width, height, resizeMethod, fixOrientation, callback, crossOrigin) {
@@ -1474,7 +1484,7 @@ var Dropzone = class Dropzone extends Emitter {
 				return;
 			} else console.warn("Retried this chunk too often. Giving up.");
 		}
-		this._errorProcessing(files, response || this.options.dictResponseError.replace("{{statusCode}}", xhr.status), xhr);
+		this._errorProcessing(files, response || this.options.dictResponseError.replace("{{statusCode}}", String(xhr.status)), xhr);
 	}
 	submitRequest(xhr, formData, files) {
 		if (xhr.readyState != 1) {
@@ -1518,130 +1528,132 @@ var Dropzone = class Dropzone extends Emitter {
 			return (c === "x" ? r : r & 3 | 8).toString(16);
 		});
 	}
-};
-Dropzone.initClass();
-Dropzone.options = {};
-Dropzone.optionsForElement = function(element) {
-	if (element.getAttribute("id")) return Dropzone.options[camelize(element.getAttribute("id"))];
-	else return;
-};
-Dropzone.instances = [];
-Dropzone.forElement = function(element) {
-	if (typeof element === "string") element = document.querySelector(element);
-	if ((element != null ? element.dropzone : void 0) == null) throw new Error("No Dropzone found for given element. This is probably because you're trying to access it before Dropzone had the time to initialize. Use the `init` option to setup any additional observers on your Dropzone.");
-	return element.dropzone;
-};
-Dropzone.discover = function() {
-	let dropzones;
-	if (document.querySelectorAll) dropzones = document.querySelectorAll(".dropzone");
-	else {
-		dropzones = [];
-		let checkElements = (elements) => (() => {
+	static optionsForElement(element) {
+		if (element.getAttribute("id")) return Dropzone.options[camelize(element.getAttribute("id"))];
+		else return;
+	}
+	static forElement(element) {
+		if (typeof element === "string") element = document.querySelector(element);
+		if ((element != null ? element.dropzone : void 0) == null) throw new Error("No Dropzone found for given element. This is probably because you're trying to access it before Dropzone had the time to initialize. Use the `init` option to setup any additional observers on your Dropzone.");
+		return element.dropzone;
+	}
+	static discover() {
+		let dropzones;
+		if (document.querySelectorAll) dropzones = document.querySelectorAll(".dropzone");
+		else {
+			dropzones = [];
+			let checkElements = (elements) => (() => {
+				let result = [];
+				for (let el of elements) if (/(^| )dropzone($| )/.test(el.className)) result.push(dropzones.push(el));
+				else result.push(void 0);
+				return result;
+			})();
+			checkElements([...document.getElementsByTagName("div")]);
+			checkElements([...document.getElementsByTagName("form")]);
+		}
+		return (() => {
 			let result = [];
-			for (let el of elements) if (/(^| )dropzone($| )/.test(el.className)) result.push(dropzones.push(el));
+			for (let dropzone of dropzones) if (Dropzone.optionsForElement(dropzone) !== false) result.push(new Dropzone(dropzone));
 			else result.push(void 0);
 			return result;
 		})();
-		checkElements(document.getElementsByTagName("div"));
-		checkElements(document.getElementsByTagName("form"));
 	}
-	return (() => {
-		let result = [];
-		for (let dropzone of dropzones) if (Dropzone.optionsForElement(dropzone) !== false) result.push(new Dropzone(dropzone));
-		else result.push(void 0);
-		return result;
-	})();
-};
-Dropzone.blockedBrowsers = [/opera.*(Macintosh|Windows Phone).*version\/12/i];
-Dropzone.isBrowserSupported = function() {
-	let capableBrowser = true;
-	if (window.File && window.FileReader && window.FileList && window.Blob && window.FormData && document.querySelector) {
-		if (!("classList" in document.createElement("a"))) capableBrowser = false;
-		else {
-			if (Dropzone.blacklistedBrowsers !== void 0) Dropzone.blockedBrowsers = Dropzone.blacklistedBrowsers;
-			for (let regex of Dropzone.blockedBrowsers) if (regex.test(navigator.userAgent)) {
-				capableBrowser = false;
-				continue;
+	static isBrowserSupported() {
+		let capableBrowser = true;
+		if (window.File && window.FileReader && window.FileList && window.Blob && window.FormData && document.querySelector) {
+			if (!("classList" in document.createElement("a"))) capableBrowser = false;
+			else {
+				if (Dropzone.blacklistedBrowsers !== void 0) Dropzone.blockedBrowsers = Dropzone.blacklistedBrowsers;
+				for (let regex of Dropzone.blockedBrowsers) if (regex.test(navigator.userAgent)) {
+					capableBrowser = false;
+					continue;
+				}
 			}
+		} else capableBrowser = false;
+		return capableBrowser;
+	}
+	static dataURItoBlob(dataURI) {
+		let byteString = atob(dataURI.split(",")[1]);
+		let mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+		let ab = new ArrayBuffer(byteString.length);
+		let ia = new Uint8Array(ab);
+		for (let i = 0, end = byteString.length, asc = 0 <= end; asc ? i <= end : i >= end; asc ? i++ : i--) ia[i] = byteString.charCodeAt(i);
+		return new Blob([ab], { type: mimeString });
+	}
+	static createElement(string) {
+		let div = document.createElement("div");
+		div.innerHTML = string;
+		return div.childNodes[0];
+	}
+	static elementInside(element, container) {
+		if (element === container) return true;
+		while (element = element.parentNode) if (element === container) return true;
+		return false;
+	}
+	static getElement(el, name) {
+		let element;
+		if (typeof el === "string") element = document.querySelector(el);
+		else if (el.nodeType != null) element = el;
+		if (element == null) throw new Error(`Invalid \`${name}\` option provided. Please provide a CSS selector or a plain HTML element.`);
+		return element;
+	}
+	static getElements(els, name) {
+		let el, elements;
+		if (els instanceof Array) {
+			elements = [];
+			try {
+				for (el of els) elements.push(this.getElement(el, name));
+			} catch (e) {
+				elements = null;
+			}
+		} else if (typeof els === "string") {
+			elements = [];
+			for (el of document.querySelectorAll(els)) elements.push(el);
+		} else if (els.nodeType != null) elements = [els];
+		if (elements == null || !elements.length) throw new Error(`Invalid \`${name}\` option provided. Please provide a CSS selector, a plain HTML element or a list of those.`);
+		return elements;
+	}
+	static confirm(question, accepted, rejected) {
+		if (window.confirm(question)) return accepted();
+		else if (rejected != null) return rejected();
+	}
+	static isValidFile(file, acceptedFiles) {
+		if (!acceptedFiles) return true;
+		acceptedFiles = typeof acceptedFiles === "string" ? acceptedFiles.split(",") : acceptedFiles;
+		let mimeType = file.type;
+		let baseMimeType = mimeType.replace(/\/.*$/, "");
+		for (let validType of acceptedFiles) {
+			validType = validType.trim();
+			if (validType.charAt(0) === ".") {
+				if (file.name.toLowerCase().indexOf(validType.toLowerCase(), file.name.length - validType.length) !== -1) return true;
+			} else if (validType.endsWith("/*")) {
+				if (baseMimeType === validType.replace(/\/.*$/, "")) return true;
+			} else if (mimeType === validType) return true;
 		}
-	} else capableBrowser = false;
-	return capableBrowser;
+		return false;
+	}
 };
-Dropzone.dataURItoBlob = function(dataURI) {
-	let byteString = atob(dataURI.split(",")[1]);
-	let mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
-	let ab = new ArrayBuffer(byteString.length);
-	let ia = new Uint8Array(ab);
-	for (let i = 0, end = byteString.length, asc = 0 <= end; asc ? i <= end : i >= end; asc ? i++ : i--) ia[i] = byteString.charCodeAt(i);
-	return new Blob([ab], { type: mimeString });
-};
+_Dropzone = Dropzone;
+_Dropzone.version = version;
+_Dropzone.Emitter = Emitter;
+_Dropzone.options = {};
+_Dropzone.instances = [];
+_Dropzone.blockedBrowsers = [/opera.*(Macintosh|Windows Phone).*version\/12/i];
+_Dropzone.ADDED = "added";
+_Dropzone.QUEUED = "queued";
+_Dropzone.ACCEPTED = _Dropzone.QUEUED;
+_Dropzone.UPLOADING = "uploading";
+_Dropzone.PROCESSING = _Dropzone.UPLOADING;
+_Dropzone.CANCELED = "canceled";
+_Dropzone.ERROR = "error";
+_Dropzone.SUCCESS = "success";
 var without = (list, rejectedItem) => list.filter((item) => item !== rejectedItem).map((item) => item);
 var camelize = (str) => str.replace(/[-_](\w)/g, (match) => match.charAt(1).toUpperCase());
-Dropzone.createElement = function(string) {
-	let div = document.createElement("div");
-	div.innerHTML = string;
-	return div.childNodes[0];
-};
-Dropzone.elementInside = function(element, container) {
-	if (element === container) return true;
-	while (element = element.parentNode) if (element === container) return true;
-	return false;
-};
-Dropzone.getElement = function(el, name) {
-	let element;
-	if (typeof el === "string") element = document.querySelector(el);
-	else if (el.nodeType != null) element = el;
-	if (element == null) throw new Error(`Invalid \`${name}\` option provided. Please provide a CSS selector or a plain HTML element.`);
-	return element;
-};
-Dropzone.getElements = function(els, name) {
-	let el, elements;
-	if (els instanceof Array) {
-		elements = [];
-		try {
-			for (el of els) elements.push(this.getElement(el, name));
-		} catch (e) {
-			elements = null;
-		}
-	} else if (typeof els === "string") {
-		elements = [];
-		for (el of document.querySelectorAll(els)) elements.push(el);
-	} else if (els.nodeType != null) elements = [els];
-	if (elements == null || !elements.length) throw new Error(`Invalid \`${name}\` option provided. Please provide a CSS selector, a plain HTML element or a list of those.`);
-	return elements;
-};
-Dropzone.confirm = function(question, accepted, rejected) {
-	if (window.confirm(question)) return accepted();
-	else if (rejected != null) return rejected();
-};
-Dropzone.isValidFile = function(file, acceptedFiles) {
-	if (!acceptedFiles) return true;
-	acceptedFiles = acceptedFiles.split(",");
-	let mimeType = file.type;
-	let baseMimeType = mimeType.replace(/\/.*$/, "");
-	for (let validType of acceptedFiles) {
-		validType = validType.trim();
-		if (validType.charAt(0) === ".") {
-			if (file.name.toLowerCase().indexOf(validType.toLowerCase(), file.name.length - validType.length) !== -1) return true;
-		} else if (validType.endsWith("/*")) {
-			if (baseMimeType === validType.replace(/\/.*$/, "")) return true;
-		} else if (mimeType === validType) return true;
-	}
-	return false;
-};
 if (typeof jQuery !== "undefined" && jQuery !== null) jQuery.fn.dropzone = function(options) {
 	return this.each(function() {
 		return new Dropzone(this, options);
 	});
 };
-Dropzone.ADDED = "added";
-Dropzone.QUEUED = "queued";
-Dropzone.ACCEPTED = Dropzone.QUEUED;
-Dropzone.UPLOADING = "uploading";
-Dropzone.PROCESSING = Dropzone.UPLOADING;
-Dropzone.CANCELED = "canceled";
-Dropzone.ERROR = "error";
-Dropzone.SUCCESS = "success";
 var detectVerticalSquash = function(img) {
 	let ih = img.naturalHeight;
 	let canvas = document.createElement("canvas");
@@ -1714,7 +1726,7 @@ var ExifRestore = class {
 		let x = 0;
 		while (x < segments.length) {
 			seg = segments[x];
-			if (seg[0] === 255 & seg[1] === 225) return seg;
+			if (seg[0] === 255 && seg[1] === 225) return seg;
 			x++;
 		}
 		return [];
@@ -1735,8 +1747,8 @@ var ExifRestore = class {
 		let segments = [];
 		while (true) {
 			var length;
-			if (rawImageArray[head] === 255 & rawImageArray[head + 1] === 218) break;
-			if (rawImageArray[head] === 255 & rawImageArray[head + 1] === 216) head += 2;
+			if (rawImageArray[head] === 255 && rawImageArray[head + 1] === 218) break;
+			if (rawImageArray[head] === 255 && rawImageArray[head + 1] === 216) head += 2;
 			else {
 				length = rawImageArray[head + 2] * 256 + rawImageArray[head + 3];
 				let endPoint = head + length + 2;
